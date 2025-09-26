@@ -1,0 +1,344 @@
+openapi: 3.0.3
+info:
+  title: 网页截图服务 API
+  description: |
+    一个基于Flask和Selenium的网页截图服务，支持自定义视口大小和多种输出格式。
+
+    ## 功能特性
+    - 网页截图：支持任意网页的截图功能
+    - 自定义视口：可指定截图时的视口大小
+    - 多种格式：支持base64和文件两种返回格式
+    - 完整页面：支持截取完整页面或可见区域
+    - 等待时间：可配置页面加载等待时间
+    - 健康检查：内置健康检查接口
+    - CORS支持：完整的跨域资源共享支持
+
+    ## 安全注意事项
+    - 生产环境请配置适当的CORS_ORIGINS
+    - 建议使用反向代理和SSL/TLS
+    - 配置请求频率限制
+  version: 1.0.0
+  contact:
+    name: API支持
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:9000
+    description: 本地开发服务器
+  - url: https://api.example.com
+    description: 生产环境服务器
+
+tags:
+  - name: screenshot
+    description: 截图相关接口
+  - name: health
+    description: 健康检查接口
+  - name: info
+    description: 服务信息接口
+
+paths:
+  /screenshot:
+    post:
+      tags:
+        - screenshot
+      summary: 截取网页截图
+      description: |
+        截取指定网页的截图，支持自定义视口大小、等待时间和输出格式。
+
+        ## 参数说明
+        - `url`: 要截图的网址（必需）
+        - `wait_time`: 页面加载等待时间，范围1-60秒
+        - `full_page`: 是否截取完整页面
+        - `format`: 返回格式，base64或file
+        - `viewport_width`: 视口宽度，范围320-4096像素
+        - `viewport_height`: 视口高度，范围240-4096像素
+
+        ## 错误码
+        - 400: 参数错误
+        - 500: 服务器错误
+        - 503: 服务不可用
+      operationId: takeScreenshot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScreenshotRequest"
+            examples:
+              basic:
+                summary: 基本截图
+                value:
+                  url: "https://platform.kangfx.com"
+                  wait_time: 3
+                  full_page: true
+                  format: "base64"
+              custom_viewport:
+                summary: 自定义视口
+                value:
+                  url: "https://platform.kangfx.com"
+                  viewport_width: 1280
+                  viewport_height: 720
+                  wait_time: 3
+                  full_page: true
+                  format: "base64"
+              file_format:
+                summary: 文件格式返回
+                value:
+                  url: "https://platform.kangfx.com"
+                  wait_time: 3
+                  full_page: true
+                  format: "file"
+      responses:
+        "200":
+          description: 截图成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScreenshotResponse"
+            image/png:
+              schema:
+                type: string
+                format: binary
+              description: PNG格式的截图文件
+        "400":
+          description: 参数错误
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error: "缺少必需参数: url"
+        "500":
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error: "截图失败，请检查网址是否正确"
+        "503":
+          description: 服务不可用
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error: "Chrome/Chromium启动失败"
+
+  /health:
+    get:
+      tags:
+        - health
+      summary: 健康检查
+      description: 检查服务是否正常运行
+      operationId: healthCheck
+      responses:
+        "200":
+          description: 服务健康
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: "healthy"
+                service: "screenshot_service"
+                timestamp: 1640995200.123
+
+  /:
+    get:
+      tags:
+        - info
+      summary: API使用说明
+      description: 获取API使用说明和参数说明
+      operationId: getApiInfo
+      responses:
+        "200":
+          description: API信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiInfoResponse"
+
+components:
+  schemas:
+    ScreenshotRequest:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          format: uri
+          description: 要截图的网址
+          example: "https://platform.kangfx.com"
+        wait_time:
+          type: integer
+          minimum: 1
+          maximum: 60
+          default: 3
+          description: 页面加载等待时间（秒）
+          example: 3
+        full_page:
+          type: boolean
+          default: true
+          description: 是否截取完整页面
+          example: true
+        format:
+          type: string
+          enum: [base64, file]
+          default: base64
+          description: 返回格式
+          example: "base64"
+        viewport_width:
+          type: integer
+          minimum: 320
+          maximum: 4096
+          default: 1920
+          description: 视口宽度（像素）
+          example: 1920
+        viewport_height:
+          type: integer
+          minimum: 240
+          maximum: 4096
+          default: 1080
+          description: 视口高度（像素）
+          example: 1080
+
+    ScreenshotResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 请求是否成功
+          example: true
+        screenshot:
+          type: string
+          format: byte
+          description: Base64编码的截图数据
+          example: "iVBORw0KGgoAAAANSUhEUgAA..."
+        url:
+          type: string
+          description: 截图的网址
+          example: "https://platform.kangfx.com"
+        size:
+          type: integer
+          description: 截图数据大小（字节）
+          example: 123456
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 请求是否成功
+          example: false
+        error:
+          type: string
+          description: 错误信息
+          example: "错误描述信息"
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: 服务状态
+          example: "healthy"
+        service:
+          type: string
+          description: 服务名称
+          example: "screenshot_service"
+        timestamp:
+          type: number
+          format: float
+          description: 时间戳
+          example: 1640995200.123
+
+    ApiInfoResponse:
+      type: object
+      properties:
+        service:
+          type: string
+          description: 服务名称
+          example: "网页截图服务"
+        version:
+          type: string
+          description: 服务版本
+          example: "1.0.0"
+        endpoints:
+          type: object
+          description: 可用接口
+          properties:
+            "POST /screenshot":
+              type: string
+              description: "截取网页截图"
+            "GET /health":
+              type: string
+              description: "健康检查"
+            "GET /":
+              type: string
+              description: "API说明"
+        usage:
+          type: object
+          description: 参数说明
+          properties:
+            url:
+              type: string
+              description: "要截图的网址（必需）"
+            wait_time:
+              type: string
+              description: "等待时间，默认3秒（可选）"
+            full_page:
+              type: string
+              description: "是否截取完整页面，默认true（可选）"
+            format:
+              type: string
+              description: "返回格式，base64或file，默认base64（可选）"
+            viewport_width:
+              type: string
+              description: "视口宽度，默认1920（可选）"
+            viewport_height:
+              type: string
+              description: "视口高度，默认1080（可选）"
+        example:
+          type: object
+          description: 请求示例
+          properties:
+            url:
+              type: string
+              example: "https://platform.kangfx.com"
+            wait_time:
+              type: integer
+              example: 3
+            full_page:
+              type: boolean
+              example: true
+            format:
+              type: string
+              example: "base64"
+            viewport_width:
+              type: integer
+              example: 1920
+            viewport_height:
+              type: integer
+              example: 1080
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API密钥认证（可选）
+
+security:
+  - ApiKeyAuth: []
+
+externalDocs:
+  description: 项目文档
+  url: https://github.com/your-org/screenshot-service
