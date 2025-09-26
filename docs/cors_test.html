@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CORS跨域测试</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+    }
+
+    .test-section h3 {
+      margin-top: 0;
+      color: #555;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+      font-size: 14px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .result {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .success {
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+
+    .error {
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    .info {
+      background-color: #d1ecf1;
+      border: 1px solid #bee5eb;
+      color: #0c5460;
+    }
+
+    .loading {
+      background-color: #fff3cd;
+      border: 1px solid #ffeaa7;
+      color: #856404;
+    }
+
+    /* 服务状态样式 */
+    .service-status {
+      margin-bottom: 30px;
+      padding: 15px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border: 1px solid #dee2e6;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+
+    .status-dot.online {
+      background-color: #28a745;
+      box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    }
+
+    .status-dot.offline {
+      background-color: #dc3545;
+      box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+
+    .status-dot.checking {
+      background-color: #ffc107;
+      box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+      }
+
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+      }
+
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+      }
+    }
+
+    .status-details {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: rgba(255, 255, 255, 0.7);
+      border-radius: 5px;
+      font-size: 14px;
+      min-height: 60px;
+    }
+
+    .status-details .service-info {
+      margin-bottom: 5px;
+    }
+
+    .status-details .last-check {
+      color: #6c757d;
+      font-size: 12px;
+    }
+
+    /* 刷新按钮样式 */
+    .status-indicator button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .status-indicator button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🌐 CORS跨域测试页面</h1>
+
+    <!-- 服务状态显示 -->
+    <div id="serviceStatus" class="service-status">
+      <div class="status-indicator">
+        <div class="status-left">
+          <span id="statusDot" class="status-dot offline"></span>
+          <span id="statusText">检查服务状态中...</span>
+        </div>
+        <button id="refreshStatus" onclick="checkServiceHealth()" style="display: none;">🔄 刷新状态</button>
+      </div>
+      <div id="statusDetails" class="status-details">
+        <div id="serviceInfo">正在检查服务状态...</div>
+        <div id="lastCheck"></div>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h3>1. 健康检查测试</h3>
+      <p>测试基本的GET请求跨域访问</p>
+      <button onclick="testHealthCheck()">测试健康检查</button>
+      <div id="healthResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+      <h3>2. API说明测试</h3>
+      <p>测试根路径的跨域访问</p>
+      <button onclick="testApiInfo()">测试API说明</button>
+      <div id="apiResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+      <h3>3. 截图接口测试</h3>
+      <p>测试POST请求的跨域访问</p>
+      <button onclick="testScreenshot()">测试截图接口</button>
+      <div id="screenshotResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+      <h3>4. 预检请求测试</h3>
+      <p>测试OPTIONS预检请求</p>
+      <button onclick="testPreflight()">测试预检请求</button>
+      <div id="preflightResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+      <h3>5. 完整功能测试</h3>
+      <p>测试完整的截图功能</p>
+      <button onclick="testFullFunction()">完整功能测试</button>
+      <div id="fullResult" class="result" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:9000';
+
+    // 服务状态相关元素
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const statusDetails = document.getElementById('statusDetails');
+    const serviceInfo = document.getElementById('serviceInfo');
+    const lastCheck = document.getElementById('lastCheck');
+
+    // 服务健康状态管理
+    let healthCheckInterval;
+    let isServiceOnline = false;
+
+    // 更新服务状态显示
+    function updateServiceStatus(online, data = null, error = null) {
+      isServiceOnline = online;
+
+      if (online) {
+        statusDot.className = 'status-dot online';
+        statusText.textContent = '🟢 服务在线';
+
+        if (data) {
+          serviceInfo.innerHTML = `
+                        <div class="service-info">
+                            <strong>服务名称:</strong> ${data.service || 'Screenshot Service'}<br>
+                            <strong>状态:</strong> ${data.status || 'healthy'}<br>
+                            <strong>时间戳:</strong> ${new Date(data.timestamp * 1000).toLocaleString()}
+                        </div>
+                    `;
+        }
+      } else {
+        statusDot.className = 'status-dot offline';
+        statusText.textContent = '🔴 服务离线';
+
+        serviceInfo.innerHTML = `
+                    <div class="service-info">
+                        <strong>错误信息:</strong> ${error || '无法连接到服务'}<br>
+                        <strong>请检查:</strong> 服务是否已启动 (http://localhost:9000)
+                    </div>
+                `;
+      }
+
+      lastCheck.innerHTML = `
+                <div class="last-check">
+                    最后检查: ${new Date().toLocaleString()}
+                </div>
+            `;
+    }
+
+    // 检查服务健康状态
+    async function checkServiceHealth() {
+      try {
+        statusDot.className = 'status-dot checking';
+        statusText.textContent = '🟡 检查中...';
+
+        const response = await fetch(`${API_BASE}/health`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          updateServiceStatus(true, data);
+        } else {
+          updateServiceStatus(false, null, `HTTP ${response.status}`);
+        }
+      } catch (error) {
+        updateServiceStatus(false, null, error.message);
+      }
+    }
+
+    // 启动定期健康检查
+    function startHealthCheck() {
+      // 立即检查一次
+      checkServiceHealth();
+
+      // 每30秒检查一次
+      healthCheckInterval = setInterval(checkServiceHealth, 30000);
+    }
+
+    // 停止健康检查
+    function stopHealthCheck() {
+      if (healthCheckInterval) {
+        clearInterval(healthCheckInterval);
+        healthCheckInterval = null;
+      }
+    }
+
+    function showResult(elementId, message, type = 'info') {
+      const element = document.getElementById(elementId);
+      element.style.display = 'block';
+      element.className = `result ${type}`;
+      element.textContent = message;
+    }
+
+    function showLoading(elementId) {
+      showResult(elementId, '⏳ 请求中...', 'loading');
+    }
+
+    async function testHealthCheck() {
+      showLoading('healthResult');
+
+      try {
+        const response = await fetch(`${API_BASE}/health`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showResult('healthResult',
+            `✅ 健康检查成功！\n` +
+            `状态码: ${response.status}\n` +
+            `响应数据: ${JSON.stringify(data, null, 2)}\n` +
+            `CORS头信息: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`,
+            'success'
+          );
+        } else {
+          showResult('healthResult',
+            `❌ 健康检查失败！\n` +
+            `状态码: ${response.status}\n` +
+            `错误信息: ${JSON.stringify(data, null, 2)}`,
+            'error'
+          );
+        }
+      } catch (error) {
+        showResult('healthResult',
+          `❌ 请求失败！\n` +
+          `错误类型: ${error.name}\n` +
+          `错误信息: ${error.message}`,
+          'error'
+        );
+      }
+    }
+
+    async function testApiInfo() {
+      showLoading('apiResult');
+
+      try {
+        const response = await fetch(`${API_BASE}/`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showResult('apiResult',
+            `✅ API说明获取成功！\n` +
+            `状态码: ${response.status}\n` +
+            `服务名称: ${data.service}\n` +
+            `版本: ${data.version}\n` +
+            `CORS头信息: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`,
+            'success'
+          );
+        } else {
+          showResult('apiResult',
+            `❌ API说明获取失败！\n` +
+            `状态码: ${response.status}\n` +
+            `错误信息: ${JSON.stringify(data, null, 2)}`,
+            'error'
+          );
+        }
+      } catch (error) {
+        showResult('apiResult',
+          `❌ 请求失败！\n` +
+          `错误类型: ${error.name}\n` +
+          `错误信息: ${error.message}`,
+          'error'
+        );
+      }
+    }
+
+    async function testScreenshot() {
+      showLoading('screenshotResult');
+
+      try {
+        const response = await fetch(`${API_BASE}/screenshot`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            url: 'https://platform.kangfx.com',
+            wait_time: 3,
+            full_page: false,
+            viewport_width: 1280,
+            viewport_height: 720,
+            format: 'base64'
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showResult('screenshotResult',
+            `✅ 截图接口测试成功！\n` +
+            `状态码: ${response.status}\n` +
+            `截图大小: ${data.size} bytes\n` +
+            `目标网址: ${data.url}\n` +
+            `CORS头信息: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`,
+            'success'
+          );
+        } else {
+          showResult('screenshotResult',
+            `❌ 截图接口测试失败！\n` +
+            `状态码: ${response.status}\n` +
+            `错误信息: ${JSON.stringify(data, null, 2)}`,
+            'error'
+          );
+        }
+      } catch (error) {
+        showResult('screenshotResult',
+          `❌ 请求失败！\n` +
+          `错误类型: ${error.name}\n` +
+          `错误信息: ${error.message}`,
+          'error'
+        );
+      }
+    }
+
+    async function testPreflight() {
+      showLoading('preflightResult');
+
+      try {
+        const response = await fetch(`${API_BASE}/screenshot`, {
+          method: 'OPTIONS',
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Request-Method': 'POST',
+            'Access-Control-Request-Headers': 'Content-Type'
+          }
+        });
+
+        if (response.ok) {
+          showResult('preflightResult',
+            `✅ 预检请求成功！\n` +
+            `状态码: ${response.status}\n` +
+            `CORS头信息: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`,
+            'success'
+          );
+        } else {
+          showResult('preflightResult',
+            `❌ 预检请求失败！\n` +
+            `状态码: ${response.status}\n` +
+            `响应头: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`,
+            'error'
+          );
+        }
+      } catch (error) {
+        showResult('preflightResult',
+          `❌ 预检请求失败！\n` +
+          `错误类型: ${error.name}\n` +
+          `错误信息: ${error.message}`,
+          'error'
+        );
+      }
+    }
+
+    async function testFullFunction() {
+      showLoading('fullResult');
+
+      try {
+        // 1. 测试健康检查
+        const healthResponse = await fetch(`${API_BASE}/health`);
+        const healthData = await healthResponse.json();
+
+        if (!healthResponse.ok) {
+          throw new Error(`健康检查失败: ${healthData.error || '未知错误'}`);
+        }
+
+        // 2. 测试截图功能
+        const screenshotResponse = await fetch(`${API_BASE}/screenshot`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            url: 'https://platform.kangfx.com',
+            wait_time: 3,
+            full_page: true,
+            viewport_width: 1920,
+            viewport_height: 1080,
+            format: 'base64'
+          })
+        });
+
+        const screenshotData = await screenshotResponse.json();
+
+        if (screenshotResponse.ok && screenshotData.success) {
+          showResult('fullResult',
+            `✅ 完整功能测试成功！\n\n` +
+            `1. 健康检查: ✅ 通过\n` +
+            `   - 状态: ${healthData.status}\n` +
+            `   - 服务: ${healthData.service}\n\n` +
+            `2. 截图功能: ✅ 通过\n` +
+            `   - 截图大小: ${screenshotData.size} bytes\n` +
+            `   - 目标网址: ${screenshotData.url}\n` +
+            `   - 截图数据长度: ${screenshotData.screenshot.length} 字符\n\n` +
+            `🎉 所有CORS跨域功能正常工作！`,
+            'success'
+          );
+        } else {
+          throw new Error(`截图功能失败: ${screenshotData.error || '未知错误'}`);
+        }
+
+      } catch (error) {
+        showResult('fullResult',
+          `❌ 完整功能测试失败！\n` +
+          `错误信息: ${error.message}`,
+          'error'
+        );
+      }
+    }
+
+    // 页面加载完成后的初始化
+    window.addEventListener('load', function () {
+      console.log('CORS测试页面已加载');
+      console.log('请确保截图服务已启动在 http://localhost:9000');
+
+      // 启动健康检查
+      startHealthCheck();
+
+      // 显示刷新按钮
+      const refreshButton = document.getElementById('refreshStatus');
+      if (refreshButton) {
+        refreshButton.style.display = 'inline-block';
+      }
+    });
+
+    // 页面卸载时停止健康检查
+    window.addEventListener('beforeunload', function () {
+      stopHealthCheck();
+    });
+  </script>
+</body>
+
+</html>

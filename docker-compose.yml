@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  screenshot-service:
+    build: .
+    container_name: screenshot-service
+    ports:
+      - "9000:9000"
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # 可选：挂载日志目录
+      - ./logs:/app/logs
+      # 可选：挂载截图输出目录
+      - ./screenshots:/app/screenshots
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "0.5"
+        reservations:
+          memory: 512M
+          cpus: "0.25"
+    # 安全设置
+    security_opt:
+      - no-new-privileges:true
+    # 网络设置
+    networks:
+      - screenshot-network
+
+networks:
+  screenshot-network:
+    driver: bridge
+
+# 可选：添加数据卷
+volumes:
+  logs:
+  screenshots:
