@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: 网页截图服务 API
+  title: WebSnap API
   description: |
     一个基于Flask和Selenium的网页截图服务，支持自定义视口大小和多种输出格式。
 

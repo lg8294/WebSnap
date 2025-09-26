@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-网页截图服务性能测试脚本
+WebSnap 性能测试脚本
 """
 
 import requests

@@ -1,4 +1,4 @@
-# 网页截图服务 Docker 部署指南
+# WebSnap Docker 部署指南
 
 ## 快速开始
 
@@ -12,7 +12,7 @@ docker-compose up -d
 docker-compose ps
 
 # 查看日志
-docker-compose logs -f screenshot-service
+docker-compose logs -f websnap-service
 
 # 停止服务
 docker-compose down
@@ -22,25 +22,25 @@ docker-compose down
 
 ```bash
 # 构建镜像
-docker build -t screenshot-service .
+docker build -t websnap .
 
 # 运行容器
 docker run -d \
-  --name screenshot-service \
+  --name websnap-service \
   -p 9000:9000 \
   -v $(pwd)/screenshots:/app/screenshots \
   -v $(pwd)/logs:/app/logs \
-  screenshot-service
+  websnap
 
 # 查看容器状态
 docker ps
 
 # 查看日志
-docker logs -f screenshot-service
+docker logs -f websnap-service
 
 # 停止容器
-docker stop screenshot-service
-docker rm screenshot-service
+docker stop websnap-service
+docker rm websnap-service
 ```
 
 ## 服务配置

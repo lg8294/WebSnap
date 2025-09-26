@@ -17,7 +17,7 @@ which chromium
 which google-chrome
 
 # 在Docker容器中检查
-docker exec -it screenshot-service /bin/bash
+docker exec -it websnap-service /bin/bash
 which chromium
 
 # 如果未安装，重新构建镜像
@@ -68,7 +68,7 @@ chmod 755 screenshots/
 chown -R 1000:1000 logs/ screenshots/
 
 # 在Docker中检查用户权限
-docker exec -it screenshot-service id
+docker exec -it websnap-service id
 ```
 
 ### 2. 截图功能问题
@@ -107,14 +107,14 @@ curl -X POST http://localhost:9000/screenshot \
 3. **JavaScript渲染问题**
 ```bash
 # 检查Chrome控制台错误
-docker exec -it screenshot-service /bin/bash
+docker exec -it websnap-service /bin/bash
 google-chrome --headless --disable-gpu --dump-dom https://platform.kangfx.com
 ```
 
 4. **内存不足**
 ```bash
 # 检查内存使用
-docker stats screenshot-service
+docker stats websnap-service
 
 # 增加内存限制
 deploy:
@@ -202,7 +202,7 @@ def get_cached_screenshot(url, params):
 restart: unless-stopped
 
 # 或使用cron定期重启
-0 2 * * * docker restart screenshot-service
+0 2 * * * docker restart websnap-service
 ```
 
 2. **优化Chrome内存使用**
@@ -257,7 +257,7 @@ echo "nameserver 8.8.8.8" >> /etc/resolv.conf
 **重要日志信息**：
 ```bash
 # 查看错误日志
-docker logs screenshot-service 2>&1 | grep ERROR
+docker logs websnap-service 2>&1 | grep ERROR
 
 # 查看特定时间段的日志
 docker logs --since="2024-01-01T00:00:00" screenshot-service
@@ -286,14 +286,14 @@ curl http://localhost:9000/health
 #!/bin/bash
 if ! curl -f http://localhost:9000/health > /dev/null 2>&1; then
     echo "Service is down, restarting..."
-    docker restart screenshot-service
+    docker restart websnap-service
 fi
 ```
 
 **性能监控**：
 ```bash
 # 监控资源使用
-docker stats screenshot-service
+docker stats websnap-service
 
 # 监控API响应时间
 curl -w "@curl-format.txt" -o /dev/null -s http://localhost:9000/health
@@ -324,7 +324,7 @@ docker-compose up -d
 #### 进入容器调试
 ```bash
 # 进入运行中的容器
-docker exec -it screenshot-service /bin/bash
+docker exec -it websnap-service /bin/bash
 
 # 手动测试Chrome
 google-chrome --headless --disable-gpu --dump-dom https://example.com

@@ -24,7 +24,7 @@ api_bp = Blueprint('api', __name__)
 api = Api(
     api_bp,
     version='1.0',
-    title='网页截图服务 API',
+    title='WebSnap API',
     description='一个基于Flask和Selenium的网页截图服务',
     doc='/docs/',  # Swagger UI路径
     prefix='/api/v1'
@@ -143,7 +143,7 @@ class HealthResource(Resource):
         """健康检查接口"""
         return {
             'status': 'healthy',
-            'service': 'screenshot_service',
+            'service': 'websnap',
             'timestamp': time.time()
         }
 
@@ -154,7 +154,7 @@ class InfoResource(Resource):
     def get(self):
         """首页，显示API使用说明"""
         return {
-            'service': '网页截图服务',
+            'service': 'WebSnap',
             'version': '1.0.0',
             'endpoints': {
                 'POST /api/v1/screenshot/screenshot': '截取网页截图',

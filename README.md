@@ -1,11 +1,11 @@
-# 网页截图服务
+# WebSnap
 
 一个基于Flask和Selenium的网页截图服务，支持自定义视口大小和多种输出格式。
 
 ## 项目结构
 
 ```
-screenshot-service/
+WebSnap/
 ├── app/                    # 应用主目录
 │   ├── __init__.py
 │   ├── app.py             # Flask应用工厂
@@ -102,8 +102,8 @@ screenshot-service/
 
 2. **使用Docker命令**
    ```bash
-   docker build -t screenshot-service .
-   docker run -d -p 9000:9000 screenshot-service
+   docker build -t websnap .
+   docker run -d -p 9000:9000 websnap
    ```
 
 ## API使用
@@ -196,7 +196,7 @@ curl http://localhost:9000/health
 ```json
 {
   "status": "healthy",
-  "service": "screenshot_service",
+  "service": "websnap",
   "timestamp": 1640995200.123
 }
 ```
@@ -209,7 +209,7 @@ API使用说明接口。
 
 ```json
 {
-  "service": "网页截图服务",
+  "service": "WebSnap",
   "version": "1.0.0",
   "endpoints": {
     "POST /screenshot": "截取网页截图",

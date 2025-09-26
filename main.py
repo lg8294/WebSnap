@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-网页截图服务主入口
+WebSnap 主入口
 """
 
 import os
@@ -32,7 +32,7 @@ def cleanup():
 if __name__ == '__main__':
     try:
         config_class = config[os.environ.get('FLASK_ENV', 'default')]
-        logger.info("启动网页截图服务...")
+        logger.info("启动WebSnap服务...")
         logger.info(f"环境: {os.environ.get('FLASK_ENV', 'default')}")
         logger.info(f"端口: {config_class.PORT}")
         

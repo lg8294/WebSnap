@@ -1,9 +1,9 @@
 version: "3.8"
 
 services:
-  screenshot-service:
+  websnap-service:
     build: .
-    container_name: screenshot-service
+    container_name: websnap-service
     ports:
       - "9000:9000"
     environment:
@@ -35,10 +35,10 @@ services:
       - no-new-privileges:true
     # 网络设置
     networks:
-      - screenshot-network
+      - websnap-network
 
 networks:
-  screenshot-network:
+  websnap-network:
     driver: bridge
 
 # 可选：添加数据卷
